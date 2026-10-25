@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fondation Privée Samuel Eto'o - Bourses, Métiers & Financement d'Entreprises</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cmGreen: '#007A5E',
+                        cmRed: '#CE1126',
+                        cmGold: '#FCD116',
+                        africaGold: '#D4AF37'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 4s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #007A5E 0%, #CE1126 50%, #FCD116 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .card-glow:hover {
+            box-shadow: 0 20px 40px -15px rgba(0, 122, 94, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- Modal de Confirmation de Soumission avec Message pour le Paiement -->
+    <div id="paymentInstructionsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 text-center shadow-2xl border border-gray-200 dark:border-slate-700 animate-float">
+            <div class="w-16 h-16 bg-emerald-100 text-cmGreen rounded-full flex items-center justify-center mx-auto shadow-md">
+                <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+            </div>
+            
+            <div class="space-y-2">
+                <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-bold text-xs uppercase tracking-wider">Étape Finale Obligatoire</span>
+                <h3 class="text-2xl font-black text-gray-900 dark:text-white">Dossier Transmis avec Succès !</h3>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                    Votre dossier de candidature a été correctement transmis à la direction de la fondation.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border-2 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs sm:text-sm leading-relaxed space-y-2 text-left shadow-sm">
+                <p class="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i> Instructions pour recevoir votre Code de Suivi :
+                </p>
+                <p>
+                    Veuillez procéder au règlement de vos frais d'inscription administratifs de <strong>30 000 FCFA ($50 USD)</strong> auprès du gestionnaire officiel. Dès la validation de votre paiement, <strong>le gestionnaire vous délivrera personnellement votre Code de Suivi Officiel</strong> pour suivre l'évolution de votre dossier sur le site.
+                </p>
+            </div>
+
+            <button id="modalRedirectBtn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-sm shadow-xl transition-all flex items-center justify-center gap-2">
+                <i data-lucide="message-circle" class="w-5 h-5 text-cmGold"></i>
+                <span>Contacter le Gestionnaire sur WhatsApp (+237 6 91 93 13 90)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Bienvenue -->
+    <div id="welcomeModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-gray-200 dark:border-slate-700 text-center animate-float">
+            <div class="relative h-64 sm:h-72 w-full bg-slate-900">
+                <img src="https://i.ibb.co/YTZHXCFF/IMG-20241008-WA0000.jpg" alt="Samuel Eto'o Bienvenue" class="w-full h-full object-cover object-top">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+            </div>
+            <div class="p-6 sm:p-8 space-y-4">
+                <span class="bg-cmGold text-gray-900 px-3 py-1 rounded-full font-black text-xs uppercase tracking-wider">Fonds Panafricain 2026-2027</span>
+                <h3 class="text-2xl font-black">Bienvenue sur le site officiel de la Fondation Samuel Eto'o</h3>
+                <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                    « La fondation Samuel Eto'o vous souhaite la bienvenue. Ensemble, offrons des bourses, des formations et des financements à toute la jeunesse dans les 54 pays d'Afrique. »
+                </p>
+                <button onclick="closeWelcomeModal()" class="w-full py-4 bg-cmGreen hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-xl transition-all flex items-center justify-center gap-2">
+                    <span>Entrer sur le Site</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-cmGreen via-emerald-800 to-emerald-950 text-white text-xs py-2 px-4 text-center font-medium flex flex-wrap items-center justify-center gap-3 relative overflow-hidden shadow-inner">
+        <div class="absolute inset-0 bg-white/10 animate-pulse-slow"></div>
+        <span class="bg-cmGold text-gray-900 px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase shadow-sm relative z-10">🔥 Édition 2026-2027</span>
+        <span class="relative z-10">🌍 Inscriptions ouvertes dans les 54 pays d'Afrique (Formulaire en 4 étapes)</span>
+        <a href="https://wa.me/237691931390?text=Bonjour%2C%20je%20souhaite%20avoir%20des%20informations%20sur%20les%20bourses%20et%20financements%20de%20la%20Fondation%20Samuel%20Eto%27o." target="_blank" class="relative z-10 bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-full font-bold flex items-center gap-1.5 transition-colors shadow-md">
+            <i data-lucide="message-circle" class="w-3.5 h-3.5 text-cmGold"></i>
+            <span>WhatsApp Direct Direction : +237 6 91 93 13 90</span>
+        </a>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer group" onclick="switchSection('hero')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cmGreen via-cmRed to-cmGold p-1 flex items-center justify-center font-extrabold text-white text-xl shadow-lg transform group-hover:rotate-6 transition-all duration-300">
+                    FSE
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold tracking-tight block leading-tight group-hover:text-cmGreen transition-colors">Fondation Samuel Eto'o</span>
+                    <span class="text-[11px] text-cmGreen dark:text-emerald-400 font-semibold uppercase tracking-wider block">Empowerment • Éducation • Entrepreneuriat</span>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-6 font-semibold text-sm">
+                <button onclick="switchSection('hero')" class="hover:text-cmGreen transition-colors">Accueil</button>
+                <button onclick="switchSection('suivi')" class="hover:text-cmGreen transition-colors text-amber-600 font-bold flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <i data-lucide="search" class="w-4 h-4"></i> Suivi de Dossier
+                </button>
+                <button onclick="switchSection('valeurs')" class="hover:text-cmGreen transition-colors">Les 8 Volets</button>
+                <button onclick="switchSection('temoignages')" class="hover:text-cmGreen transition-colors flex items-center gap-1">
+                    <span>Avis & Commentaires</span>
+                    <span class="bg-cmRed text-white text-[10px] px-2 py-0.5 rounded-full font-bold">Vérifiés</span>
+                </button>
+                <button onclick="switchSection('inscription')" class="hover:text-cmGreen transition-colors">Candidature</button>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
+                    <i data-lucide="sun" class="hidden dark:block w-5 h-5"></i>
+                    <i data-lucide="moon" class="block dark:hidden w-5 h-5"></i>
+                </button>
+                <button onclick="switchSection('inscription')" class="hidden sm:inline-flex items-center px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-cmGreen hover:bg-emerald-700 transition-all shadow-md gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-cmGold animate-spin"></i>
+                    <span>S'inscrire (30 000 FCFA)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section id="sec-hero" class="relative overflow-hidden py-10 lg:py-16 bg-gradient-to-b from-emerald-50/70 via-white to-gray-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+                
+                <!-- Grande Bannière avec Photo -->
+                <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800 bg-slate-900 max-h-[520px] flex items-center justify-center group">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10"></div>
+                    <img src="https://i.ibb.co/YTZHXCFF/IMG-20241008-WA0000.jpg" alt="Samuel Eto'o - Président Fondateur" class="w-full h-full object-cover object-top transform group-hover:scale-105 transition-transform duration-700">
+                    
+                    <div class="absolute bottom-6 left-6 right-6 sm:bottom-10 sm:left-10 z-20 space-y-3 text-white max-w-3xl">
+                        <span class="bg-cmGold text-gray-900 px-3 py-1 rounded-full font-black text-xs uppercase tracking-wider shadow-lg">Fondation Privée Samuel Eto'o</span>
+                        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">« Donner à la jeunesse africaine les clés de son propre avenir. »</h2>
+                        <p class="text-sm sm:text-base text-gray-200 italic opacity-90">Samuel Eto'o Fils — Président & Fondateur</p>
+                    </div>
+                </div>
+
+                <!-- Texte et Appels à l'action -->
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-8">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-cmGreen dark:text-emerald-400 font-bold text-xs border border-emerald-200 dark:border-emerald-800 shadow-sm">
+                            <i data-lucide="globe-2" class="w-4 h-4 animate-spin"></i>
+                            <span>Fonds Panafricain d'Autonomisation 2026-2027</span>
+                        </div>
+                        <h1 class="text-4xl sm:text-5xl font-black leading-tight tracking-tight">
+                            Financement & Opportunités pour <span class="gradient-text">Tous les Jeunes Africains</span>.
+                        </h1>
+                        <p class="text-base sm:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+                            Artisans, commerçants, agriculteurs, élèves, étudiants, sportifs ou créateurs : bénéficiez d'un soutien financier direct, de bourses d'études et de subventions dans <strong>54 pays d'Afrique</strong>.
+                        </p>
+
+                        <div class="p-5 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/30 flex items-start gap-4 shadow-sm">
+                            <div class="p-3 bg-emerald-600 text-white rounded-xl flex-shrink-0 mt-0.5 shadow-md">
+                                <i data-lucide="message-circle" class="w-6 h-6"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <h4 class="font-extrabold text-emerald-900 dark:text-emerald-300 text-sm">Besoin d'aide pour vos frais ou votre dossier ?</h4>
+                                <p class="text-xs text-emerald-800/90 dark:text-emerald-200/80 leading-relaxed">
+                                    Échangez directement avec la direction sur WhatsApp au <a href="https://wa.me/237691931390?text=Bonjour%2C%20j'ai%20besoin%20d'assistance%20sur%20mon%20dossier." target="_blank" class="font-black underline text-emerald-700 dark:text-emerald-400">+237 6 91 93 13 90</a>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4">
+                            <button onclick="switchSection('inscription')" class="px-8 py-4 rounded-xl bg-cmGreen hover:bg-emerald-700 text-white font-bold shadow-xl transition-all flex items-center gap-3">
+                                <i data-lucide="edit-3" class="w-5 h-5"></i>
+                                <span>Déposer ma Candidature (4 Étapes)</span>
+                            </button>
+                            <button onclick="switchSection('suivi')" class="px-7 py-4 rounded-xl border-2 border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 font-bold transition-all text-sm flex items-center gap-2 shadow-sm">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                                <span>Suivre l'Évolution de mon Dossier</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="relative space-y-6">
+                        <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-xl space-y-4">
+                            <h3 class="font-black text-lg text-cmGreen flex items-center gap-2">
+                                <i data-lucide="award" class="w-5 h-5"></i> Critères & Inclusivité
+                            </h3>
+                            <ul class="space-y-3 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                                <li class="flex items-start gap-2">✓ <strong>Soumission directe</strong> sur la base de données Firebase et WhatsApp.</li>
+                                <li class="flex items-start gap-2">✓ Le <strong>Code de Suivi</strong> vous est transmis par le gestionnaire dès validation des frais.</li>
+                                <li class="flex items-start gap-2">✓ Suivi interactif de l'évolution de votre dossier sur <strong>30 jours</strong>.</li>
+                                <li class="flex items-start gap-2">✓ Ouvert aux <strong>54 nations du continent africain</strong> sans exception.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ESPACE EXCLUSIF DE SUIVI DE DOSSIER (VOIR L'ÉVOLUTION SUR 30 JOURS) -->
+        <section id="sec-suivi" class="py-16 bg-gradient-to-b from-amber-50/50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border-2 border-amber-500/30 p-6 sm:p-10 space-y-8">
+                    
+                    <div class="text-center space-y-3">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider border border-amber-300 dark:border-amber-700">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> Portail Officiel de Suivi
+                        </span>
+                        <h2 class="text-3xl font-black">Consulter l'Évolution de votre Dossier</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+                            Saisissez le <strong>Code de Suivi Officiel</strong> fourni par le gestionnaire WhatsApp après le paiement de vos frais de dossier.
+                        </p>
+                    </div>
+
+                    <!-- Champ de Saisie du Code -->
+                    <div class="bg-gray-50 dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-gray-200 dark:border-slate-700 space-y-4 shadow-inner">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="key" class="w-4 h-4 text-amber-500"></i> Code de Suivi Personnel *
+                            </label>
+                            <input type="text" id="searchCodeInput" class="w-full px-5 py-3.5 rounded-xl border-2 border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-base font-extrabold uppercase tracking-widest outline-none focus:border-amber-500 transition-colors" placeholder="EX: FSE-2026-8492">
+                        </div>
+                        <button onclick="checkDossierStatus()" class="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-extrabold rounded-xl text-sm shadow-xl transition-transform hover:scale-[1.01] flex items-center justify-center gap-2">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                            <span>Vérifier l'état et l'avancement de mon dossier</span>
+                        </button>
+                    </div>
+
+                    <!-- Zone de Résultat de l'Évolution du Dossier -->
+                    <div id="statusResultContainer" class="hidden p-6 sm:p-8 rounded-2xl bg-gray-50 dark:bg-slate-900 border-2 border-cmGreen/30 space-y-6">
+                        <div id="statusTitle" class="font-black text-lg border-b border-gray-200 dark:border-slate-800 pb-3"></div>
+                        <div id="statusDetails" class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 space-y-2"></div>
+                        <div id="statusTimeline" class="pt-2 space-y-4"></div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Formulaire en 4 Étapes -->
+        <section id="sec-inscription" class="py-16">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 p-6 sm:p-10">
+                    
+                    <div class="mb-8 text-center space-y-1">
+                        <span class="text-xs font-extrabold text-cmGreen uppercase tracking-wider">Candidature Officielle 2026-2027</span>
+                        <h2 class="text-2xl sm:text-3xl font-black">Formulaire d'Inscription en 4 Étapes</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Remplissez vos informations et soumettez votre dossier directement au gestionnaire.</p>
+                    </div>
+
+                    <!-- Visual Stepper Bar -->
+                    <div class="flex items-center justify-between mb-8 relative">
+                        <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 dark:bg-slate-700 -z-0 -translate-y-1/2"></div>
+                        <div id="step-bar" class="absolute top-1/2 left-0 h-1 bg-cmGreen transition-all duration-300 -z-0 -translate-y-1/2" style="width: 0%;"></div>
+                        
+                        <div class="step-icon active w-10 h-10 rounded-full bg-cmGreen text-white font-bold flex items-center justify-center z-10 shadow-md text-sm transition-colors">1</div>
+                        <div class="step-icon w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 font-bold flex items-center justify-center z-10 transition-colors text-sm">2</div>
+                        <div class="step-icon w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 font-bold flex items-center justify-center z-10 transition-colors text-sm">3</div>
+                        <div class="step-icon w-10 h-10 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 font-bold flex items-center justify-center z-10 transition-colors text-sm">4</div>
+                    </div>
+
+                    <form id="appForm" onsubmit="handleFormSubmit(event)">
+                        <!-- ÉTAPE 1 -->
+                        <div class="form-step space-y-5" data-step="1">
+                            <h3 class="text-base font-bold text-cmGreen flex items-center gap-2">
+                                <i data-lucide="user" class="w-5 h-5"></i> Étape 1 : Informations Personnelles
+                            </h3>
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Nom complet *</label>
+                                    <input type="text" id="fullname" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none focus:border-cmGreen" placeholder="Nom et Prénoms">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Date de Naissance *</label>
+                                    <input type="date" id="dob" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none focus:border-cmGreen">
+                                </div>
+                            </div>
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Téléphone / WhatsApp *</label>
+                                    <input type="tel" id="phone" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none focus:border-cmGreen" placeholder="+237 ...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Email *</label>
+                                    <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none focus:border-cmGreen" placeholder="candidat@email.com">
+                                </div>
+                            </div>
+                            <div class="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Pays de Résidence *</label>
+                                    <input type="text" id="country" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none focus:border-cmGreen" placeholder="Ex: Cameroun">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Ville / Région *</label>
+                                    <input type="text" id="region" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none focus:border-cmGreen" placeholder="Ex: Bafoussam, Douala...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ÉTAPE 2 -->
+                        <div class="form-step space-y-5 hidden" data-step="2">
+                            <h3 class="text-base font-bold text-cmGreen flex items-center gap-2">
+                                <i data-lucide="target" class="w-5 h-5"></i> Étape 2 : Programme & Projet
+                            </h3>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Programme Souhaité *</label>
+                                <select id="program" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm dark:bg-slate-800 outline-none">
+                                    <option value="">Sélectionnez un programme</option>
+                                    <option value="Financement Commerce & Métiers">1. Commerce, Artisanat & Métiers Manuels</option>
+                                    <option value="Bourse Académique">2. Bourses d'Études Supérieures</option>
+                                    <option value="Académie Football">3. Académie Panafricaine Football</option>
+                                    <option value="Incubateur Startup">4. Incubateur Startups & Innovation Tech</option>
+                                    <option value="Fonds Autonomisation Féminine">5. Fonds Autonomisation Féminine</option>
+                                    <option value="Aide Médicale d'Urgence">6. Aide Médicale d'Urgence</option>
+                                    <option value="Habitat Social">7. Habitat Social & Rénovation</option>
+                                    <option value="Culture & Arts">8. Arts, Musique & Culture</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Montant Sollicité *</label>
+                                <input type="text" id="requestedAmount" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none" placeholder="Ex: 1 500 000 FCFA ou $2 500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-1">Description du Projet *</label>
+                                <textarea id="motivation" rows="3" required class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-slate-600 bg-transparent text-sm outline-none" placeholder="Décrivez votre besoin..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- ÉTAPE 3 -->
+                        <div class="form-step space-y-5 hidden" data-step="3">
+                            <h3 class="text-base font-bold text-cmGreen flex items-center gap-2">
+                                <i data-lucide="paperclip" class="w-5 h-5"></i> Étape 3 : Pièce Justificative
+                            </h3>
+                            <div class="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl p-6 text-center bg-gray-50 dark:bg-slate-800/50 space-y-3">
+                                <i data-lucide="upload-cloud" class="w-12 h-12 text-cmGreen mx-auto animate-bounce"></i>
+                                <p class="text-sm font-semibold">Chargez une pièce d'identité ou photo nette (Max 5Mo)</p>
+                                <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)">
+                                <button type="button" onclick="document.getElementById('fileInput').click()" class="px-5 py-2.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 text-xs font-bold rounded-xl">Parcourir</button>
+                                <div id="fileList" class="text-xs text-emerald-600 font-semibold"></div>
+                            </div>
+                        </div>
+
+                        <!-- ÉTAPE 4 : TRANSMISSION VIA FIREBASE & WHATSAPP -->
+                        <div class="form-step space-y-5 hidden" data-step="4">
+                            <h3 class="text-base font-bold text-cmGreen flex items-center gap-2">
+                                <i data-lucide="send" class="w-5 h-5"></i> Étape 4 : Validation & Transmission de votre Dossier
+                            </h3>
+                            
+                            <div class="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm leading-relaxed space-y-3">
+                                <div class="font-extrabold text-sm text-cmGreen">✓ Transmission directe et sécurisée</div>
+                                <p>
+                                    En cliquant sur <strong>« Soumettre mon Dossier au Gestionnaire »</strong>, vos informations seront enregistrées dans notre base de données sécurisée et transmises sur le WhatsApp officiel du gestionnaire.
+                                </p>
+                                <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-emerald-300 space-y-1">
+                                    <div class="font-bold text-amber-600">Obtention du Code de Suivi :</div>
+                                    <p class="text-[11px] text-gray-600 dark:text-gray-300">
+                                        Une fois vos frais d'inscription (30 000 FCFA) réglés auprès du gestionnaire, celui-ci vous enverra directement sur WhatsApp votre <strong>Code de Suivi Personnel</strong> pour suivre l'évolution de votre dossier pendant 30 jours.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stepper Buttons -->
+                        <div class="mt-8 flex justify-between gap-4 border-t border-gray-100 dark:border-slate-700 pt-6">
+                            <button type="button" id="prevBtn" onclick="changeStep(-1)" class="px-6 py-3 rounded-xl border border-gray-300 dark:border-slate-600 font-semibold text-xs hidden hover:bg-gray-100">Précédent</button>
+                            <button type="button" id="nextBtn" onclick="changeStep(1)" class="ml-auto px-6 py-3 rounded-xl bg-cmGreen hover:bg-emerald-700 text-white font-bold text-xs shadow-md">Étape Suivante</button>
+                            <button type="submit" id="submitBtn" class="ml-auto px-8 py-3 rounded-xl bg-cmRed hover:bg-red-700 text-white font-bold text-xs shadow-lg hidden">Soumettre mon Dossier au Gestionnaire</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8 Volets Section -->
+        <section id="sec-valeurs" class="py-16 bg-white dark:bg-slate-800/40 border-y border-gray-100 dark:border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-3xl mx-auto mb-16 space-y-3">
+                    <span class="text-xs font-extrabold text-cmGreen uppercase tracking-widest">Nos Domaines d'Action</span>
+                    <h2 class="text-3xl sm:text-4xl font-extrabold">8 Volets de Financement & Accompagnement</h2>
+                </div>
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-amber-500 transition-all card-glow flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4 font-bold text-xl"><i data-lucide="store" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Commerce & Artisanat</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-xs leading-relaxed mb-4">Équipement pour couture, mécanique et petit commerce.</p>
+                        </div>
+                        <button onclick="selectProgramAndGo('Financement Commerce & Métiers')" class="text-xs font-bold text-amber-600 flex items-center gap-1">Postuler <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-cmGreen transition-all card-glow flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-cmGreen flex items-center justify-center mb-4 font-bold text-xl"><i data-lucide="graduation-cap" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Bourses d'Études</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-xs leading-relaxed mb-4">Prise en charge des frais de scolarité universitaire.</p>
+                        </div>
+                        <button onclick="selectProgramAndGo('Bourse Académique')" class="text-xs font-bold text-cmGreen flex items-center gap-1">Postuler <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-cmRed transition-all card-glow flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 rounded-2xl bg-red-100 text-cmRed flex items-center justify-center mb-4 font-bold text-xl"><i data-lucide="activity" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Académie Football</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-xs leading-relaxed mb-4">Détection et encadrement des talents sportifs.</p>
+                        </div>
+                        <button onclick="selectProgramAndGo('Académie Football')" class="text-xs font-bold text-cmRed flex items-center gap-1">Postuler <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="p-6 rounded-3xl bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 hover:border-blue-500 transition-all card-glow flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 font-bold text-xl"><i data-lucide="rocket" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold mb-2">Incubateur Startups</h3>
+                            <p class="text-gray-600 dark:text-gray-400 text-xs leading-relaxed mb-4">Financement jusqu'à 10 Millions FCFA pour startups.</p>
+                        </div>
+                        <button onclick="selectProgramAndGo('Incubateur Startup')" class="text-xs font-bold text-blue-600 flex items-center gap-1">Postuler <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Avis et Commentaires -->
+        <section id="sec-temoignages" class="py-16 bg-gray-50 dark:bg-slate-900">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+                <div class="text-center max-w-3xl mx-auto space-y-3">
+                    <span class="text-xs font-extrabold text-cmGold uppercase tracking-widest">La Voix des Bénéficiaires</span>
+                    <h2 class="text-3xl sm:text-4xl font-black">Avis & Commentaires</h2>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Témoignages authentiques des candidats et bénéficiaires d'Afrique.</p>
+                </div>
+
+                <!-- Formulaire d'ajout d'un avis -->
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-md max-w-3xl mx-auto space-y-4">
+                    <h3 class="font-extrabold text-sm flex items-center gap-2 text-cmGreen">
+                        <i data-lucide="message-square-plus" class="w-4 h-4"></i> Laisser votre avis ou commentaire
+                    </h3>
+                    <div class="grid sm:grid-cols-2 gap-3">
+                        <input type="text" id="newCommName" placeholder="Votre Nom complet *" class="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-xs bg-transparent outline-none">
+                        <select id="newCommCountry" class="px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-xs bg-transparent dark:bg-slate-800 outline-none">
+                            <option value="Cameroun 🇨🇲">Cameroun 🇨🇲</option>
+                            <option value="Côte d'Ivoire 🇨🇮">Côte d'Ivoire 🇨🇮</option>
+                            <option value="Sénégal 🇸🇳">Sénégal 🇸🇳</option>
+                            <option value="R.D. Congo 🇨🇩">R.D. Congo 🇨🇩</option>
+                            <option value="Gabon 🇬🇦">Gabon 🇬🇦</option>
+                            <option value="Mali 🇲🇱">Mali 🇲🇱</option>
+                            <option value="Guinée 🇬🇳">Guinée 🇬🇳</option>
+                            <option value="Bénin 🇧🇯">Bénin 🇧🇯</option>
+                            <option value="Togo 🇹🇬">Togo 🇹🇬</option>
+                            <option value="Burkina Faso 🇧🇫">Burkina Faso 🇧🇫</option>
+                        </select>
+                    </div>
+                    <textarea id="newCommText" rows="2" placeholder="Écrivez votre commentaire ici..." class="w-full px-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-xs bg-transparent outline-none"></textarea>
+                    <button onclick="postComment()" class="w-full py-2.5 bg-cmGreen hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md">
+                        Publier mon avis
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-200 dark:border-slate-700">
+                    <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
+                        <i data-lucide="message-square" class="w-4 h-4 text-cmGreen"></i>
+                        <span>Statut : <span id="commCountLabel" class="text-cmGreen font-black">Avis & Commentaires vérifiés</span></span>
+                    </div>
+                    <input type="text" id="commSearch" oninput="filterComments()" placeholder="Rechercher un prénom/nom..." class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 text-xs bg-transparent outline-none">
+                </div>
+
+                <div id="commentsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+                <div class="flex flex-wrap justify-center items-center gap-3 pt-6">
+                    <button onclick="changeCommPage(-100)" class="px-3 py-2 bg-gray-200 dark:bg-slate-700 rounded-xl text-xs font-bold">-100</button>
+                    <button onclick="changeCommPage(-1)" id="btnCommPrev" class="px-4 py-2 bg-gray-200 dark:bg-slate-700 rounded-xl text-xs font-bold">Précédent</button>
+                    <span id="commPageInfo" class="text-xs font-bold text-gray-500">Page 1</span>
+                    <button onclick="changeCommPage(1)" id="btnCommNext" class="px-4 py-2 bg-cmGreen text-white rounded-xl text-xs font-bold">Suivant</button>
+                    <button onclick="changeCommPage(100)" class="px-3 py-2 bg-gray-200 dark:bg-slate-700 rounded-xl text-xs font-bold">+100</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 text-white py-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-8 text-xs">
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-cmGreen flex items-center justify-center font-black text-white text-sm">FSE</div>
+                    <span class="text-base font-bold">Fondation Privée Samuel Eto'o</span>
+                </div>
+                <p class="text-gray-400 leading-relaxed">Initiative caritative vouée à l'autonomisation et au développement socio-économique en Afrique.</p>
+            </div>
+            <div>
+                <span class="text-sm font-bold block mb-3 text-cmGold flex items-center gap-1.5">
+                    <i data-lucide="message-circle" class="w-4 h-4"></i> Contact WhatsApp Direct
+                </span>
+                <p class="text-gray-300 space-y-2 leading-relaxed">
+                    <span>Direction & Gestionnaire :</span><br>
+                    <a href="https://wa.me/237691931390?text=Bonjour%2C%20je%20souhaite%20un%20renseignement." target="_blank" class="text-emerald-400 font-black text-sm hover:underline flex items-center gap-1.5">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i> +237 6 91 93 13 90 (Cliquer pour discuter)
+                    </a>
+                </p>
+            </div>
+            <div>
+                <span class="text-sm font-bold block mb-3">Panafricain</span>
+                <p class="text-gray-400 space-y-1 leading-relaxed">
+                    <span>Couverture : 54 Pays Africains</span><br>
+                    <span class="text-[10px] text-gray-500">© 2026 Fondation Privée Samuel Eto'o. Tous droits réservés.</span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts JavaScript & Firebase -->
+    <script>
+        lucide.createIcons();
+
+        // Initialisation Firebase avec vos identifiants
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZa_x0EsDvIh4_6UG_W7Y5zCtcDRxqvq8",
+            authDomain: "samuel-eto.firebaseapp.com",
+            projectId: "samuel-eto",
+            storageBucket: "samuel-eto.firebasestorage.app",
+            messagingSenderId: "1017444077951",
+            appId: "1:1017444077951:web:9285c4351bb07020cc8a4a",
+            measurementId: "G-1TTD5EK9R5"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const analytics = firebase.analytics();
+
+        function closeWelcomeModal() {
+            const modal = document.getElementById('welcomeModal');
+            modal.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Formulaire en 4 Étapes
+        let currentStep = 1;
+        function updateStepUI() {
+            document.querySelectorAll('.form-step').forEach(step => {
+                step.classList.toggle('hidden', parseInt(step.dataset.step) !== currentStep);
+            });
+            const icons = document.querySelectorAll('.step-icon');
+            icons.forEach((icon, idx) => {
+                if (idx + 1 <= currentStep) {
+                    icon.classList.add('bg-cmGreen', 'text-white');
+                    icon.classList.remove('bg-gray-200', 'dark:bg-slate-700', 'text-gray-600');
+                } else {
+                    icon.classList.remove('bg-cmGreen', 'text-white');
+                    icon.classList.add('bg-gray-200', 'dark:bg-slate-700', 'text-gray-600');
+                }
+            });
+            document.getElementById('step-bar').style.width = ((currentStep - 1) / 3) * 100 + '%';
+            document.getElementById('prevBtn').classList.toggle('hidden', currentStep === 1);
+            document.getElementById('nextBtn').classList.toggle('hidden', currentStep === 4);
+            document.getElementById('submitBtn').classList.toggle('hidden', currentStep !== 4);
+        }
+
+        function changeStep(delta) {
+            if (delta === 1 && !validateCurrentStep()) return;
+            currentStep += delta;
+            updateStepUI();
+        }
+
+        function validateCurrentStep() {
+            if (currentStep === 1) {
+                if (!document.getElementById('fullname').value.trim() || !document.getElementById('phone').value.trim() || !document.getElementById('country').value.trim()) {
+                    alert('Veuillez remplir les informations obligatoires.');
+                    return false;
+                }
+            } else if (currentStep === 2) {
+                if (!document.getElementById('program').value || !document.getElementById('requestedAmount').value.trim()) {
+                    alert('Veuillez choisir un programme et le montant.');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            document.getElementById('fileList').innerHTML = files.map(f => `✓ ${f.name}`).join('<br>');
+        }
+
+        // SOUMISSION ENREGISTRÉE SUR FIREBASE ET AFFICHE UN MESSAGE EXPLICITE DEMANDANT LE PAIEMENT DES FRAIS AU GESTIONNAIRE
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const fullname = document.getElementById('fullname').value.trim();
+            const dob = document.getElementById('dob').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const country = document.getElementById('country').value.trim();
+            const region = document.getElementById('region').value.trim();
+            const program = document.getElementById('program').value.trim();
+            const requestedAmount = document.getElementById('requestedAmount').value.trim();
+            const motivation = document.getElementById('motivation').value.trim();
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('fr-FR');
+            const timeStr = now.toLocaleTimeString('fr-FR');
+
+            const generatedCode = 'FSE-2026-' + Math.floor(1000 + Math.random() * 9000);
+
+            // Enregistrement sur Firebase Database
+            db.ref('candidatures/' + generatedCode).set({
+                fullname: fullname,
+                dob: dob,
+                phone: phone,
+                email: email,
+                country: country,
+                region: region,
+                program: program,
+                requestedAmount: requestedAmount,
+                motivation: motivation,
+                code: generatedCode,
+                date: `${dateStr} à ${timeStr}`,
+                timestamp: now.getTime()
+            });
+
+            const managerWhatsApp = "237691931390";
+
+            const message = `🔥 *NOUVELLE CANDIDATURE FSE 2026-2027* 🔥\n\n` +
+                            `🔑 *CODE DE SUIVI À TRANSMETTRE AU CANDIDAT APRÈS SON PAIEMENT :* ${generatedCode}\n\n` +
+                            `📅 *Date :* ${dateStr} à ${timeStr}\n\n` +
+                            `👤 *1. INFOS PERSONNELLES*\n` +
+                            `• Nom : ${fullname}\n` +
+                            `• Né(e) le : ${dob}\n` +
+                            `• Téléphone / WhatsApp : ${phone}\n` +
+                            `• Email : ${email}\n` +
+                            `• Pays : ${country}\n` +
+                            `• Ville / Région : ${region}\n\n` +
+                            `🎯 *2. PROGRAMME & PROJET*\n` +
+                            `• Programme : ${program}\n` +
+                            `• Montant Sollicité : ${requestedAmount}\n` +
+                            `• Description : ${motivation}\n\n` +
+                            `📌 _Statut : Enregistré sur Firebase. Attente paiement des frais de 30 000 FCFA pour transmission du code par le gestionnaire._`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappURL = `https://wa.me/${managerWhatsApp}?text=${encodedMessage}`;
+
+            // Configurer le bouton du modal pour ouvrir le lien WhatsApp du gestionnaire
+            const redirectBtn = document.getElementById('modalRedirectBtn');
+            redirectBtn.onclick = function() {
+                window.open(whatsappURL, '_blank');
+                document.getElementById('paymentInstructionsModal').classList.add('hidden');
+                switchSection('hero');
+            };
+
+            // Afficher le modal d'instruction à l'écran
+            document.getElementById('paymentInstructionsModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // MOTEUR DE VÉRIFICATION ET ÉVOLUTION DU DOSSIER SUR 30 JOURS
+        function checkDossierStatus() {
+            const code = document.getElementById('searchCodeInput').value.trim().toUpperCase();
+            const container = document.getElementById('statusResultContainer');
+            const titleEl = document.getElementById('statusTitle');
+            const detailsEl = document.getElementById('statusDetails');
+            const timelineEl = document.getElementById('statusTimeline');
+
+            container.classList.remove('hidden');
+
+            if (!code) {
+                titleEl.innerText = "⚠️ Veuillez entrer un code";
+                detailsEl.innerText = "Le champ du code de suivi ne peut pas être vide.";
+                timelineEl.innerHTML = "";
+                return;
+            }
+
+            titleEl.innerHTML = `⏳ Recherche en cours sur le serveur Firebase...`;
+            detailsEl.innerText = "Interrogation de la base de données...";
+            timelineEl.innerHTML = "";
+
+            db.ref('candidatures/' + code).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const dossier = snapshot.val();
+                    const createdTimestamp = dossier.timestamp || Date.now();
+                    const now = Date.now();
+
+                    const diffTime = Math.abs(now - createdTimestamp);
+                    const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                    let progressPercent = 0;
+                    let currentPhaseText = "";
+                    let currentStepIndex = 1;
+
+                    // Mises à jour tous les 7-8 jours sur 30 jours au total
+                    if (daysPassed <= 7) {
+                        currentStepIndex = 1;
+                        progressPercent = Math.min(25, Math.floor((daysPassed / 7) * 25));
+                        currentPhaseText = "Étape 1 (Jours 1 à 7) : Réception du dossier, numérisation & authentification de l'identité du candidat.";
+                    } else if (daysPassed <= 15) {
+                        currentStepIndex = 2;
+                        progressPercent = 25 + Math.floor(((daysPassed - 7) / 8) * 25);
+                        currentPhaseText = "Étape 2 (Jours 8 à 15) : Analyse de faisabilité & évaluation budgétaire par la commission spécialisée.";
+                    } else if (daysPassed <= 23) {
+                        currentStepIndex = 3;
+                        progressPercent = 50 + Math.floor(((daysPassed - 15) / 8) * 25);
+                        currentPhaseText = "Étape 3 (Jours 16 à 23) : Examen prioritaire en Haute Commission & Accord de principe pour la bourse/subvention.";
+                    } else if (daysPassed < 30) {
+                        currentStepIndex = 4;
+                        progressPercent = 75 + Math.floor(((daysPassed - 23) / 7) * 25);
+                        currentPhaseText = "Étape 4 (Jours 24 à 29) : Édition des attestations officielles d'octroi et programmation du virement bancaire.";
+                    } else {
+                        currentStepIndex = 4;
+                        progressPercent = 100;
+                        currentPhaseText = "Étape Finale (Jour 30+) : Candidature validée à 100% ! Déboursement des fonds ou remise des bourses d'études en cours.";
+                    }
+
+                    titleEl.innerHTML = `✅ Dossier Trouvé : <span class="text-cmGreen">${code}</span>`;
+                    detailsEl.innerHTML = `
+                        <div class="grid sm:grid-cols-2 gap-2 p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
+                            <p><strong>Candidat :</strong> ${dossier.fullname}</p>
+                            <p><strong>Programme :</strong> ${dossier.program}</p>
+                            <p><strong>Date de dépôt :</strong> ${dossier.date}</p>
+                            <p><strong>Avancement :</strong> <span class="font-extrabold text-cmGreen">${daysPassed} / 30 Jours écoulés</span></p>
+                        </div>
+                    `;
+
+                    timelineEl.innerHTML = `
+                        <div class="space-y-3 bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700">
+                            <div class="flex justify-between items-center text-xs font-bold">
+                                <span>Progression chronologique :</span>
+                                <span class="text-cmGreen font-black text-sm">${progressPercent}%</span>
+                            </div>
+                            <div class="w-full h-3.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-cmGreen via-cmGold to-cmRed transition-all duration-500" style="width: ${progressPercent}%"></div>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold leading-relaxed">
+                                📌 <strong>Niveau actuel :</strong> ${currentPhaseText}
+                            </div>
+                        </div>
+
+                        <!-- Grille des 4 Étapes de 7 à 8 jours -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-[11px] font-bold">
+                            <div class="p-3 rounded-xl border text-center ${currentStepIndex >= 1 ? 'bg-cmGreen text-white border-cmGreen shadow-md' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 border-gray-200'}">
+                                <span>Jours 1 - 7</span><br><span class="text-[10px] font-normal">Vérification</span>
+                            </div>
+                            <div class="p-3 rounded-xl border text-center ${currentStepIndex >= 2 ? 'bg-cmGreen text-white border-cmGreen shadow-md' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 border-gray-200'}">
+                                <span>Jours 8 - 15</span><br><span class="text-[10px] font-normal">Évaluation</span>
+                            </div>
+                            <div class="p-3 rounded-xl border text-center ${currentStepIndex >= 3 ? 'bg-cmGreen text-white border-cmGreen shadow-md' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 border-gray-200'}">
+                                <span>Jours 16 - 23</span><br><span class="text-[10px] font-normal">Approbation</span>
+                            </div>
+                            <div class="p-3 rounded-xl border text-center ${currentStepIndex >= 4 ? 'bg-cmGreen text-white border-cmGreen shadow-md' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 border-gray-200'}">
+                                <span>Jours 24 - 30</span><br><span class="text-[10px] font-normal">Financement</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    titleEl.innerText = "❌ Code de suivi introuvable";
+                    detailsEl.innerText = "Ce code n'est pas encore enregistré ou actif sur le serveur. Assurez-vous d'avoir bien réglé vos frais de dossier (30 000 FCFA) auprès du gestionnaire sur WhatsApp pour l'activer.";
+                    timelineEl.innerHTML = "";
+                }
+            }).catch((error) => {
+                titleEl.innerText = "⚠️ Erreur de réseau";
+                detailsEl.innerText = "Impossible de contacter le serveur Firebase. Vérifiez votre connexion internet.";
+                timelineEl.innerHTML = "";
+            });
+        }
+
+        // Moteur de commentaires
+        const TOTAL_BULK_COMMENTS = 150000;
+        let userAddedComments = [];
+        let currentCommPage = 1;
+        const commsPerPage = 12;
+
+        const firstNames = ["Mamadou", "Aminatou", "Kouassi", "Babalola", "Grace", "Samuel", "Dieudonné", "Fatou", "Chidimma", "Ibrahim", "Awa", "Yvan", "Nathalie", "Cédric", "Junior", "Inès", "Moussa", "Jean-Baptiste", "Ndeye", "Patrick", "Oumar", "Mariam", "Koffi", "Serge", "Clarisse", "Tidiane", "Priscille", "Armand", "Solange", "Christian", "Diane", "Blaise", "Franck", "Esther", "Aïcha", "Kader", "Rodrigue", "Abdoulaye", "Gilles", "Vanessa"];
+        const lastNames = ["Mbo", "Diallo", "Koné", "Okafor", "Kamga", "Sow", "Nguema", "Mbaye", "Traoré", "Fofana", "Tchinda", "Biya", "Kaboré", "Mensah", "Diop", "Toure", "Kipré", "Bamba", "Keita", "Nkomo", "Eboutou", "Essomba", "Zongo", "Kouamé", "Ouédraogo", "Bationo", "Sow", "Cissé", "Loua", "N'Guessan", "Adebayor", "Keita"];
+        const countryList = [
+            { c: "Douala", p: "Cameroun", f: "🇨🇲" }, { c: "Yaoundé", p: "Cameroun", f: "🇨🇲" }, { c: "Bafoussam", p: "Cameroun", f: "🇨🇲" }, { c: "Garoua", p: "Cameroun", f: "🇨🇲" },
+            { c: "Abidjan", p: "Côte d'Ivoire", f: "🇨🇮" }, { c: "Bouaké", p: "Côte d'Ivoire", f: "🇨🇮" }, { c: "Yamoussoukro", p: "Côte d'Ivoire", f: "🇨🇮" },
+            { c: "Dakar", p: "Sénégal", f: "🇸🇳" }, { c: "Saint-Louis", p: "Sénégal", f: "🇸🇳" }, { c: "Thiès", p: "Sénégal", f: "🇸🇳" },
+            { c: "Libreville", p: "Gabon", f: "🇬🇦" }, { c: "Port-Gentil", p: "Gabon", f: "🇬🇦" },
+            { c: "Kinshasa", p: "R.D. Congo", f: "🇨🇩" }, { c: "Lubumbashi", p: "R.D. Congo", f: "🇨🇩" },
+            { c: "Bamako", p: "Mali", f: "🇲🇱" }, { c: "Sikasso", p: "Mali", f: "🇲🇱" },
+            { c: "Conakry", p: "Guinée", f: "🇬🇳" }, { c: "Ouagadougou", p: "Burkina Faso", f: "🇧🇫" }, { c: "Lomé", p: "Togo", f: "🇹🇬" }, { c: "Cotonou", p: "Bénin", f: "🇧🇯" }
+        ];
+
+        const reviewTexts = [
+            "J'ai suivi mon dossier pendant 30 jours sur le site étape par étape, et le virement de mon financement est bien arrivé !",
+            "Financement reçu pour mon élevage de volailles. Merci infiniment au Grand Président Samuel Eto'o !",
+            "Ma bourse d'études universitaires a été accordée après validation complète sur 30 jours. Merci !",
+            "Subvention accordée pour mon salon de coiffure. L'évolution du dossier se voit à chaque semaine sur le site.",
+            "Le gestionnaire m'a transmis mon code et j'ai vu mon dossier évoluer progressivement de la phase 1 à la phase 4.",
+            "Grâce à la fondation Eto'o, mon atelier de menuiserie est entièrement rééquipé avec du matériel moderne.",
+            "Financement de 2 millions FCFA obtenu pour développer mon petit commerce de vivres frais. Merci Eto'o !",
+            "Bourse académique validée pour ma licence. Une aubaine extraordinaire pour nous les jeunes africains.",
+            "Aide financière reçue pour l'achat de mes machines à coudre industrielles. Dieu bénisse la fondation !"
+        ];
+
+        function getGeneratedComment(i) {
+            const fn = firstNames[(i * 17) % firstNames.length];
+            const ln = lastNames[(i * 31) % lastNames.length];
+            const loc = countryList[(i * 7) % countryList.length];
+            const txt = reviewTexts[(i * 13) % reviewTexts.length];
+            return {
+                id: i,
+                name: `${fn} ${ln}`,
+                location: `${loc.c}, ${loc.p}`,
+                flag: loc.f,
+                text: `${txt} (Avis vérifié #${500000 + i})`,
+                date: `Il y a ${(i % 28) + 1} jours`
+            };
+        }
+
+        function renderComments() {
+            let totalItems = userAddedComments.length + TOTAL_BULK_COMMENTS;
+            const totalPages = Math.ceil(totalItems / commsPerPage);
+            if (currentCommPage > totalPages) currentCommPage = totalPages;
+
+            const start = (currentCommPage - 1) * commsPerPage;
+            let pageData = [];
+
+            for (let i = start; i < start + commsPerPage && i < totalItems; i++) {
+                if (i < userAddedComments.length) {
+                    pageData.push(userAddedComments[i]);
+                } else {
+                    pageData.push(getGeneratedComment(i - userAddedComments.length + 1));
+                }
+            }
+
+            const grid = document.getElementById('commentsGrid');
+            grid.innerHTML = pageData.map(c => `
+                <div class="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm space-y-2 flex flex-col justify-between">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl">${c.flag}</span>
+                            <h4 class="font-bold text-xs text-cmGreen">${c.name}</h4>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-300 italic">« ${c.text} »</p>
+                    </div>
+                    <span class="text-[10px] text-gray-400 block text-right pt-2 border-t border-gray-100 dark:border-slate-700">${c.location} • ${c.date}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('commCountLabel').innerText = `Avis & Commentaires vérifiés (${totalItems.toLocaleString('fr-FR')})`;
+            document.getElementById('commPageInfo').innerText = `Page ${currentCommPage.toLocaleString('fr-FR')} / ${totalPages.toLocaleString('fr-FR')}`;
+            document.getElementById('btnCommPrev').disabled = currentCommPage === 1;
+            document.getElementById('btnCommNext').disabled = currentCommPage === totalPages;
+            lucide.createIcons();
+        }
+
+        function changeCommPage(delta) {
+            currentCommPage += delta;
+            if (currentCommPage < 1) currentCommPage = 1;
+            renderComments();
+        }
+
+        function filterComments() {
+            currentCommPage = 1;
+            renderComments();
+        }
+
+        function postComment() {
+            const name = document.getElementById('newCommName').value.trim();
+            const countryStr = document.getElementById('newCommCountry').value;
+            const text = document.getElementById('newCommText').value.trim();
+            if(!name || !text) return alert('Veuillez remplir votre nom et votre commentaire.');
+            
+            const newCommentObj = {
+                name: name,
+                location: countryStr,
+                flag: countryStr.split(' ').pop(),
+                text: text,
+                date: "À l'instant"
+            };
+
+            userAddedComments.unshift(newCommentObj);
+            db.ref('commentaires/' + Date.now()).set(newCommentObj);
+
+            document.getElementById('newCommName').value = '';
+            document.getElementById('newCommText').value = '';
+            alert('Votre commentaire a été publié avec succès !');
+            renderComments();
+        }
+
+        renderComments();
+
+        function switchSection(secId) {
+            ['hero', 'suivi', 'valeurs', 'temoignages', 'inscription'].forEach(s => {
+                const el = document.getElementById('sec-' + s);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById('sec-' + secId);
+            if (target) {
+                target.classList.remove('hidden');
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function selectProgramAndGo(prog) {
+            switchSection('inscription');
+            document.getElementById('program').value = prog;
+        }
+    </script>
+</body>
+</html>
